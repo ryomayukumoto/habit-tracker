@@ -1,5 +1,11 @@
-import AuthGate from './components/AuthGate'
-import AddLogForm from './components/AddLogForm'
+import AuthGate from './components/AuthGate';
+import AddLogForm from './components/AddLogForm';
+import LogsTable from './components/LogsTable';
+import WeeklyChart from './components/WeeklyChart';
+
+import DebugPanel from "./components/DebugPanel";
+
+import type React from 'react';
 
 export default function App() {
   return (
@@ -9,14 +15,33 @@ export default function App() {
 
       <AuthGate>
         {(user) => (
-          <div style={{ marginTop: 16, display: 'grid', gap: 16 }}>
-            <section style={{ padding: 12, border: '1px solid #ddd', borderRadius: 8 }}>
+          <div style={{ display: "grid", gap: 24 }}>
+            <section style={ card }>
               <h2>学習時間の記録</h2>
               <AddLogForm user={user} />
             </section>
+
+            <section style={ card }>
+              <h2>直近2週間のグラフ</h2>
+              <WeeklyChart user={ user }/>
+            </section>
+
+            <section style={ card }>
+              <h2>一覧</h2>
+              <LogsTable user={user} />
+            </section>
+
+            <DebugPanel user={user} />
           </div>
+
         )}
       </AuthGate>
     </div>
   )
+}
+
+const card: React.CSSProperties = {
+  padding: 16,
+  border: "1px solid #ddd",
+  borderRadius: 8,
 }
