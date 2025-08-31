@@ -1,37 +1,48 @@
-// src/components/LogsTable.tsx
-import { useEffect, useState } from 'react'
-import { collection, onSnapshot, orderBy, query, deleteDoc, doc } from 'firebase/firestore'
-import type { User } from 'firebase/auth'
-import { db } from '../lib/firebase'
-import type { HabitLog } from '../types/habit'
+import { useState } from "react";
+import type { User } from "firebase/auth";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useUserLogs } from "../hooks/useUserLogs";
+import type { HabitLog } from "../types/habit";
 
 export default function LogsTable({ user }: { user: User }) {
-  const [logs, setLogs] = useState<HabitLog[]>([])
-  const [loading, setLoading] = useState(true)
+  const { rows } = useUserLogs(user.uid);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ minutes: number; note: string }>({ minutes: 0, note: "" });
 
-  useEffect(() => {
-    const col = collection(db, 'habits', user.uid, 'logs')
-    // YYYY-MM-DD 文字列なので orderBy("date") で時系列ソート可
-    const q = query(col, orderBy('date', 'desc'))
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((d) => d.data() as HabitLog)
-      setLogs(data)
-      setLoading(false)
-    });
-    return () => unsub()
-  }, [user.uid])
+  const startEdit = (id: string, data: HabitLog) => {
+    setEditingId(id);
+    setDraft({ minutes: data.minutes, note: data.note ?? "" });
+  };
+  const cancel = () => setEditingId(null);
 
-  const remove = async (date: string) => {
-    if (!confirm(`${date} の記録を削除しますか？`)) return
-    await deleteDoc(doc(db, 'habits', user.uid, 'logs', date))
-  }
+  const save = async (id: string) => {
+    if (!Number.isFinite(draft.minutes) || draft.minutes < 0) {
+      alert("分は0以上の数値で入力してください");
+      return;
+    }
+    const ref = doc(db, "habits", user.uid, "logs", id);
+    const payload: Partial<HabitLog> = {
+      minutes: Math.floor(draft.minutes),
+      updatedAt: Date.now(),
+    };
+    if (draft.note.trim()) payload.note = draft.note.trim();
+    else payload.note = null as unknown as string; // ← noteを空にしたい場合は null を入れて上書き
 
-  if (loading) return <p>Loading...</p>
-  if (!logs.length) return <p>まだ記録がありません。フォームから保存してみてください。</p>
+    await updateDoc(ref, payload as HabitLog);
+    setEditingId(null);
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm(`${id} の記録を削除しますか？`)) return;
+    await deleteDoc(doc(db, "habits", user.uid, "logs", id));
+  };
+
+  if (!rows.length) return <p>まだ記録がありません。</p>;
 
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ borderCollapse: 'collapse', minWidth: 480 }}>
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ borderCollapse: "collapse", minWidth: 560 }}>
         <thead>
           <tr>
             <th style={th}>日付</th>
@@ -41,21 +52,60 @@ export default function LogsTable({ user }: { user: User }) {
           </tr>
         </thead>
         <tbody>
-          {logs.map((l) => (
-            <tr key={l.date}>
-              <td style={td}>{l.date}</td>
-              <td style={td}>{l.minutes}</td>
-              <td style={td}>{l.note ?? ''}</td>
-              <td style={td}>
-                <button onClick={() => remove(l.date)}>削除</button>
-              </td>
-            </tr>
-          ))}
+          {rows.map(({ id, data }) => {
+            const isEdit = editingId === id;
+            return (
+              <tr key={id}>
+                <td style={td}>{id}</td>
+
+                <td style={td}>
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      min={0}
+                      value={draft.minutes}
+                      onChange={(e) => setDraft((d) => ({ ...d, minutes: Number(e.target.value) }))}
+                      style={{ width: 120 }}
+                    />
+                  ) : (
+                    data.minutes
+                  )}
+                </td>
+
+                <td style={td}>
+                  {isEdit ? (
+                    <input
+                      value={draft.note}
+                      onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
+                      style={{ width: 260 }}
+                      placeholder="任意"
+                    />
+                  ) : (
+                    data.note ?? ""
+                  )}
+                </td>
+
+                <td style={td}>
+                  {isEdit ? (
+                    <>
+                      <button onClick={() => save(id)}>保存</button>
+                      <button onClick={cancel} style={{ marginLeft: 8 }}>キャンセル</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => startEdit(id, data)}>編集</button>
+                      <button onClick={() => remove(id)} style={{ marginLeft: 8 }}>削除</button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
-const th: React.CSSProperties = { borderBottom: '1px solid #ddd', textAlign: 'left', padding: 8 }
-const td: React.CSSProperties = { borderBottom: '1px solid #eee', padding: 8 }
+const th: React.CSSProperties = { borderBottom: "1px solid #ddd", textAlign: "left", padding: 8 };
+const td: React.CSSProperties = { borderBottom: "1px solid #eee", padding: 8 };

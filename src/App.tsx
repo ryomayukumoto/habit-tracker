@@ -2,6 +2,7 @@ import AuthGate from './components/AuthGate';
 import AddLogForm from './components/AddLogForm';
 import LogsTable from './components/LogsTable';
 import WeeklyChart from './components/WeeklyChart';
+import StatsSummary from './components/StatsSummary';
 
 import DebugPanel from "./components/DebugPanel";
 
@@ -19,6 +20,10 @@ export default function App() {
             <section style={ card }>
               <h2>学習時間の記録</h2>
               <AddLogForm user={user} />
+            </section>
+
+            <section style={card}>
+              <StatsSummary user={user} />
             </section>
 
             <section style={ card }>
