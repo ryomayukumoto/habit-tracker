@@ -7,6 +7,7 @@ import StatsSummary from './components/StatsSummary';
 import DebugPanel from "./components/DebugPanel";
 
 import type React from 'react';
+import Badges from './components/Badges';
 
 export default function App() {
   return (
@@ -29,6 +30,11 @@ export default function App() {
             <section style={ card }>
               <h2>直近2週間のグラフ</h2>
               <WeeklyChart user={ user }/>
+            </section>
+
+            <section style={card}>
+              <h2>バッジ</h2>
+              <Badges user={user} />
             </section>
 
             <section style={ card }>
