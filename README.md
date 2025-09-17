@@ -1,69 +1,29 @@
-# React + TypeScript + Vite
+# Habit Tracker - ログのしやすさと可視化を両立
+React + TypeScript / Firebase Auth + Firestore / Chart.js / 3層（Repo/Converter/Domain）
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## デモ
+- 本番URL:`デプロイURL`
+- テスト用 Googleログイン（任意）
 
-Currently, two official plugins are available:
+## スクリーンショット
+1. Dashboard（今日の記録入力）
+2. グラフ（直近14日）
+3. バッジ（3/7/30日）
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 技術スタック
+- React + TypeScript, Vite
+- Firebase (Auth, Firestore) + serverTimestamp
+- Repositoryパターン + FirestoreDataConverter
+- Chart.js
 
-## Expanding the ESLint configuration
+## 設計の工夫
+- Doc↔App型分離（Firestore依存をUIから排除）
+- `YYYY-MM-DD` を DocID にして 1日1件を担保
+- バッジ付与は固定IDで冪等
+- UTC/JSTズレ対策：ローカルISOヘルパーで日付生成
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ローカル起動
+```bash
+cp .env.example .env # VITE_FIREBASE_* を埋める
+npm i
+npm run dev

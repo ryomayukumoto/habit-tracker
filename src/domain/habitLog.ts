@@ -8,18 +8,22 @@ export type HabitLog = {
     updatedAt: Date;
 }
 
-// 連続日数（今日からさかのぼる）
+function localISO(date = new Date()): string {
+  const tz = date.getTimezoneOffset();
+  const d = new Date(date.getTime() - tz * 60000);
+  return d.toISOString().slice(0, 10);
+}
+
 export function calcStreak(dates: string[], todayISO?: string): number {
     const set = new Set(dates);
-
-    let d = todayISO ?? new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    let d = todayISO ?? localISO();
     let s = 0;
     while (set.has(d)) {
         s++;
         const dt = new Date(d);
         dt.setDate(dt.getDate() - 1);
-        d = dt.toISOString().slice(0, 10);
+    d = dt.toISOString().slice(0, 10);
+    d = localISO(dt);
     }
-
     return s;
 }

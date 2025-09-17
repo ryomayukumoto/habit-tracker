@@ -13,14 +13,18 @@ export default function WeeklyChart({ user }: { user: User }) {
     const map = new Map<string, number>();
     for (const l of logs) map.set(l.date, l.value);
 
-    // 直近14日を過去→今日の順でゼロ埋め
-    const today = new Date();
-    const ids: string[] = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      ids.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD
-    }
+    const localISO = (date = new Date()) => {
+        const tz = date.getTimezoneOffset();
+        const dd = new Date(date.getTime() - tz * 60000);
+        return dd.toISOString().slice(0, 10);
+     };
+     const ids: string[] = [];
+     const base = new Date();
+     for (let i = 13; i >= 0; i--) {
+        const d = new Date(base);
+        d.setDate(base.getDate() - i);
+        ids.push(localISO(d));
+     }
 
     const labels = ids.map((id) => id.slice(5).replace("-", "/")); // MM/DD
     const values = ids.map((id) => map.get(id) ?? 0);              // ← minutesではなくvalue

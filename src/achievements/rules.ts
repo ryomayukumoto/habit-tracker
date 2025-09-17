@@ -17,53 +17,42 @@ export const BADGE_DEFS: Badge[] = [
   { id: "weekly_300", title: "週間300分",         description: "直近7日で300分",     icon: "📈" },
 ];
 
-export type DayRow = { id: string; minutes: number };  // id = "YYYY-MM-DD"
+export type DayRow = { id: string; value: number };     // id = "YYYY-MM-DD"
 
-function isConsecutive(prev: string, cur: string) {
-    const p = new Date(prev);
-    const c = new Date(cur);
-    const ONE = 24*60* 60*1000;
-    return (c.getTime() - p.getTime()) === ONE;
-}
+function isConsecutive(a: string, b: string) {
+   const ad = new Date(a); const bd = new Date(b);
+   const x = new Date(ad); x.setDate(ad.getDate() + 1);
+   return x.getFullYear() === bd.getFullYear() && x.getMonth() === bd.getMonth() && x.getDate() === bd.getDate();
+ }
 
 // 現在の連続日数（末尾からさかのぼる）
 export function currentStreak(rows: DayRow[]): number {
-    if(!rows.length) return 0;
-    let streak = 0;
+    let s = 0;
     for(let i = rows.length - 1; i >= 0; i--) {
-        if(rows[i].minutes > 0) {
-            // 直前要素と日付が連続しているか（末尾はOK）
-            if(i === rows.length - 1) { streak++; continue; }
-            const prev = rows[i].id;
-            const next = rows[i+1].id;
-            
-            if(isConsecutive(prev, next)) streak++; else break;
-        }else break;
+        if (rows[i].value > 0) s++;
+        else break;
     }
-    return streak;
+    return s;
 }
 
 // 最長連続日数（全体）
 export function longestStreak(rows: DayRow[]): number {
-    let best = 0;
-    let cur = 0;
-    
+    let best = 0, cur = 0;
     for(let i = 0; i < rows.length; i++) {
-        if(rows[i].minutes > 0) {
-            if(i > 0 && isConsecutive(rows[i-1].id, rows[i].id)) cur++;
-            else cur = 1;
-            best = Math.max(best, cur);
-        }
-        else {
-            cur = 0;
+
+    if (rows[i].value > 0) {
+        if(i > 0 && isConsecutive(rows[i-1].id, rows[i].id)) cur++;
+        else cur = 1;
+        best = Math.max(best, cur);
+        } else {
+        cur = 0;
         }
     }
-
     return best;
 }
 
 export function sumMinutes(rows: DayRow[]) {
-    return rows.reduce((a, r) => a + (r.minutes || 0), 0);
+    return rows.reduce((a, r) => a + (r.value || 0), 0);
 }
 
 export function last7Minutes(rows: DayRow[]): number {
@@ -94,4 +83,25 @@ export function evaluateBadges(rows: DayRow[]): EarnedBadge[] {
     if(w7 >= 300) add("weekly_300");
 
     return earned;
+}
+
+// ローカルの YYYY-MM-DD を生成（UTCズレ防止）
+function localISO(date = new Date()): string {
+    const tz = date.getTimezoneOffset();
+    const d = new Date(date.getTime() - tz * 60000);
+    return d.toISOString().slice(0, 10);
+}
+
+export function calcStreak(dates: string[], todayISO?: string): number {
+    const set = new Set(dates);
+    let d = todayISO ?? localISO(); // ← ローカル基準に
+    let s = 0;
+    while (set.has(d)) {
+        s++;
+        const dt = new Date(d);
+        dt.setDate(dt.getDate() - 1);
+    d = dt.toISOString().slice(0, 10);
+    d = localISO(dt);
+    }
+    return s;
 }

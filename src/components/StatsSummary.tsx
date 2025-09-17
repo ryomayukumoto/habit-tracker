@@ -1,18 +1,30 @@
 import type { User } from "firebase/auth";
-import { useUserLogs } from "../app/hooks/useUserLogs";
+import { useHabitLogs } from "../app/hooks/useHabitLogs";
 import type React from "react";
 
 export default function StatsSummary ({ user }: { user: User }) {
-    const { last14 } = useUserLogs(user.uid);
+    const logs = useHabitLogs(user.uid);
 
-    // 合計・平均・連続日数（minutes>0を記録とみなす）
-    const values = last14.ids.map((id) => last14.map.get(id)?.minutes ?? 0);
+    // 直近14日をゼロ埋め（valueを使用）
+    const ids = (() => {
+        const out: string[] = [];
+        const base = new Date();
+        for (let i = 13; i >= 0; i--) {
+        const d = new Date(base); d.setDate(base.getDate() - i);
+        const tz = d.getTimezoneOffset(); const local = new Date(d.getTime() - tz*60000);
+        out.push(local.toISOString().slice(0,10)); // YYYY-MM-DD（ローカル基準）
+        }
+        return out;
+    })();
+    const map = new Map(logs.map(l => [l.date, l.value]));
+    const values = ids.map(id => map.get(id) ?? 0);
+
     const total = values.reduce((a, b) => a + b, 0);
     const avg = Math.round((total / values.length) * 10) / 10;
 
     let streak = 0;
     for (let i = values.length - 1; i >= 0; i--) {
-        if(values[i] > 0) streak++;
+        if (values[i] > 0) streak++;
         else break;
     }
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useUserLogs } from "./useUserLogs";
+import { useHabitLogs } from "./useHabitLogs";
 import type { User } from "firebase/auth";
 import { evaluateBadges, BADGE_DEFS, type EarnedBadge } from "../../achievements/rules";
 
@@ -8,10 +8,10 @@ function storageKey(uid: string) {
 }
 
 export function useAchivements(user: User) {
-    const { rows } = useUserLogs(user.uid);  // 全件（id昇順）
+    const logs = useHabitLogs(user.uid);     // HabitLog[]（id昇順）
     const dayRows = useMemo(
-        () => rows.map(r => ({ id: r.id, minutes: r.data.minutes })),
-        [rows]
+        () => logs.map(l => ({ id: l.id, value: l.value })), // ← value に統一
+        [logs]
     );
 
     const allEarned = useMemo<EarnedBadge[]>(
