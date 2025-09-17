@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useUserLogs } from "./useUserLogs";
 import type { User } from "firebase/auth";
-import { evaluateBadges, BADGE_DEFS, type EarnedBadge } from "../achievements/rules";
+import { evaluateBadges, BADGE_DEFS, type EarnedBadge } from "../../achievements/rules";
 
 function storageKey(uid: string) {
     return `habit_badges_seen_${uid}`;

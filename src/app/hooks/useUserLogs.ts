@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { habitLogConverter } from "../lib/converters";
+import { db } from "../../lib/firebase";
+import { habitLogConverter } from "../../lib/converters";
 import type { HabitLog } from "../types/habit";
 
 export type Row = { id: string; data: HabitLog };

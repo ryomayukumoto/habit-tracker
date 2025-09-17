@@ -1,35 +1,42 @@
 import { useState } from "react";
 import type { User } from "firebase/auth";
-import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc, serverTimestamp, deleteField } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { useUserLogs } from "../hooks/useUserLogs";
-import type { HabitLog } from "../types/habit";
+
+// ✅ CパターンのHookと型（App型＝Date）
+import { useHabitLogs } from "../app/hooks/useHabitLogs";
+import type { HabitLog } from "../domain/habitLog";
 
 export default function LogsTable({ user }: { user: User }) {
-  const { rows } = useUserLogs(user.uid);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<{ minutes: number; note: string }>({ minutes: 0, note: "" });
+  // rows: HabitLog[]（{ id, date, value, note, createdAt: Date, updatedAt: Date }）
+  const logs = useHabitLogs(user.uid);
 
-  const startEdit = (id: string, data: HabitLog) => {
-    setEditingId(id);
-    setDraft({ minutes: data.minutes, note: data.note ?? "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ value: number; note: string }>({ value: 0, note: "" });
+
+  const startEdit = (row: HabitLog) => {
+    setEditingId(row.id);
+    setDraft({ value: row.value, note: row.note ?? "" });
   };
   const cancel = () => setEditingId(null);
 
   const save = async (id: string) => {
-    if (!Number.isFinite(draft.minutes) || draft.minutes < 0) {
-      alert("分は0以上の数値で入力してください");
+    if (!Number.isFinite(draft.value) || draft.value < 0) {
+      alert("値は0以上の数値で入力してください");
       return;
     }
     const ref = doc(db, "habits", user.uid, "logs", id);
-    const payload: Partial<HabitLog> = {
-      minutes: Math.floor(draft.minutes),
-      updatedAt: Date.now(),
-    };
-    if (draft.note.trim()) payload.note = draft.note.trim();
-    else payload.note = null as unknown as string; // ← noteを空にしたい場合は null を入れて上書き
 
-    await updateDoc(ref, payload as HabitLog);
+    // 空なら note フィールドを削除、値があれば更新
+    const notePatch =
+      draft.note.trim() === "" ? { note: deleteField() } : { note: draft.note.trim().slice(0, 500) };
+
+    await updateDoc(ref, {
+      value: Math.floor(draft.value),
+      ...notePatch,
+      updatedAt: serverTimestamp(), // 端末時刻ではなくサーバ時刻
+    });
+
     setEditingId(null);
   };
 
@@ -38,7 +45,7 @@ export default function LogsTable({ user }: { user: User }) {
     await deleteDoc(doc(db, "habits", user.uid, "logs", id));
   };
 
-  if (!rows.length) return <p>まだ記録がありません。</p>;
+  if (!logs.length) return <p>まだ記録がありません。</p>;
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -52,23 +59,23 @@ export default function LogsTable({ user }: { user: User }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ id, data }) => {
-            const isEdit = editingId === id;
+          {logs.map((row) => {
+            const isEdit = editingId === row.id;
             return (
-              <tr key={id}>
-                <td style={td}>{id}</td>
+              <tr key={row.id}>
+                <td style={td}>{row.id}</td>
 
                 <td style={td}>
                   {isEdit ? (
                     <input
                       type="number"
                       min={0}
-                      value={draft.minutes}
-                      onChange={(e) => setDraft((d) => ({ ...d, minutes: Number(e.target.value) }))}
+                      value={draft.value}
+                      onChange={(e) => setDraft((d) => ({ ...d, value: Number(e.target.value) }))}
                       style={{ width: 120 }}
                     />
                   ) : (
-                    data.minutes
+                    row.value
                   )}
                 </td>
 
@@ -81,20 +88,24 @@ export default function LogsTable({ user }: { user: User }) {
                       placeholder="任意"
                     />
                   ) : (
-                    data.note ?? ""
+                    row.note ?? ""
                   )}
                 </td>
 
                 <td style={td}>
                   {isEdit ? (
                     <>
-                      <button onClick={() => save(id)}>保存</button>
-                      <button onClick={cancel} style={{ marginLeft: 8 }}>キャンセル</button>
+                      <button onClick={() => save(row.id)}>保存</button>
+                      <button onClick={cancel} style={{ marginLeft: 8 }}>
+                        キャンセル
+                      </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => startEdit(id, data)}>編集</button>
-                      <button onClick={() => remove(id)} style={{ marginLeft: 8 }}>削除</button>
+                      <button onClick={() => startEdit(row)}>編集</button>
+                      <button onClick={() => remove(row.id)} style={{ marginLeft: 8 }}>
+                        削除
+                      </button>
                     </>
                   )}
                 </td>

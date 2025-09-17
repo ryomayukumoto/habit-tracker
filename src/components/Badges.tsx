@@ -1,7 +1,7 @@
 // Badges.tsx
 import { useRef, useEffect } from "react";
 import type { User } from "firebase/auth";
-import { useAchivements } from "../hooks/useAchivements";
+import { useAchivements } from "../app/hooks/useAchivements";
 
 // セッション中に表示したバッジIDを記録（StrictModeの再実行でも二重表示しない）
 const sessionShown = new Set<string>();

@@ -1,5 +1,5 @@
 import type { User } from "firebase/auth";
-import { useUserLogs } from "../hooks/useUserLogs";
+import { useUserLogs } from "../app/hooks/useUserLogs";
 import type React from "react";
 
 export default function StatsSummary ({ user }: { user: User }) {
