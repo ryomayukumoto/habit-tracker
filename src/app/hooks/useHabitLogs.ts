@@ -2,7 +2,7 @@
 // src/app/hooks/useHabitLogs.ts
 import { useEffect, useState } from "react";
 import { type HabitLog } from "../../domain/habitLog";
-import { habitLogsRepo } from "../../infra/firesrtore/habitLogsRepo";
+import { habitLogsRepo } from "../../infra/firestore/habitLogsRepo";
 
 export function useHabitLogs(uid: string) {
   const [logs, setLogs] = useState<HabitLog[]>([]);
