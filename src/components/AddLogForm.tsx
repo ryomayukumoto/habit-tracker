@@ -2,7 +2,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { type User } from "firebase/auth";
 import dayjs from "dayjs";
-import { habitLogsRepo } from "../infra/firesrtore/habitLogsRepo";
+import { habitLogsRepo } from "../infra/firestore/habitLogsRepo";
 
 export default function AddLogForm({ user }: { user: User }) {
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
