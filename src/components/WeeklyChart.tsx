@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { User } from "firebase/auth";
-import { useHabitLogs } from "../app/hooks/useHabitLogs"; // ← ここを差し替え
+import { useHabitLogs } from "../app/hooks/useHabitLogs";
 import { Bar } from "react-chartjs-2";
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -27,7 +27,7 @@ export default function WeeklyChart({ user }: { user: User }) {
      }
 
     const labels = ids.map((id) => id.slice(5).replace("-", "/")); // MM/DD
-    const values = ids.map((id) => map.get(id) ?? 0);              // ← minutesではなくvalue
+    const values = ids.map((id) => map.get(id) ?? 0);
 
     return { labels, values };
   }, [logs]);

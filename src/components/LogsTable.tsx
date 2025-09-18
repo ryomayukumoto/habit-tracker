@@ -2,14 +2,14 @@ import { useState } from "react";
 import type { User } from "firebase/auth";
 import { doc, updateDoc, deleteDoc, serverTimestamp, deleteField } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { useToast } from "../app/hooks/useToast";
 
-// ✅ CパターンのHookと型（App型＝Date）
 import { useHabitLogs } from "../app/hooks/useHabitLogs";
 import type { HabitLog } from "../domain/habitLog";
 
 export default function LogsTable({ user }: { user: User }) {
-  // rows: HabitLog[]（{ id, date, value, note, createdAt: Date, updatedAt: Date }）
   const logs = useHabitLogs(user.uid);
+  const toast = useToast();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ value: number; note: string }>({ value: 0, note: "" });
@@ -22,7 +22,7 @@ export default function LogsTable({ user }: { user: User }) {
 
   const save = async (id: string) => {
     if (!Number.isFinite(draft.value) || draft.value < 0) {
-      alert("値は0以上の数値で入力してください");
+      toast("値は0以上の数値で入力してください");
       return;
     }
     const ref = doc(db, "habits", user.uid, "logs", id);

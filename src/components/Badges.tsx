@@ -2,13 +2,18 @@
 import { useRef, useEffect } from "react";
 import type { User } from "firebase/auth";
 import { useAchivements } from "../app/hooks/useAchivements";
+import { useToast } from "../app/hooks/useToast";
+
 
 // セッション中に表示したバッジIDを記録（StrictModeの再実行でも二重表示しない）
 const sessionShown = new Set<string>();
 
+
 export default function Badges({ user }: { user: User }) {
   const { allWithLock, newly, markSeen } = useAchivements(user);
   const pendingIdsRef = useRef<string[]>([]);
+  const toast = useToast();
+
 
   useEffect(() => {
     if (!newly.length) return;
@@ -21,12 +26,12 @@ export default function Badges({ user }: { user: User }) {
     toShow.forEach(b => sessionShown.add(b.id));
 
     // ここで初めて通知（アラート／トースト）
-    alert(`バッジ獲得！\n${toShow.map(n => `${n.icon} ${n.title}`).join("\n")}`);
+    toast(`バッジ獲得！\n${toShow.map(n => `${n.icon} ${n.title}`).join("\n")}`);
 
     // 永続側にも既読反映（ローカルストレージ）
     pendingIdsRef.current = toShow.map(b => b.id);
     markSeen(pendingIdsRef.current);
-  }, [newly, markSeen]);
+  }, [newly, markSeen, toast]);
 
   return (
     <div style={card}>

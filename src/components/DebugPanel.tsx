@@ -5,11 +5,13 @@ import { db } from "../lib/firebase";
 import {
   collection, doc, setDoc, getDoc, getDocs, query, orderBy
 } from "firebase/firestore";
+import { useToast } from "../app/hooks/useToast";
 
 export default function DebugPanel({ user }: { user: User }) {
   const [list, setList] = useState<string[]>([]);
   const projectId = getApp().options.projectId as string;
   const basePath = `habits/${user.uid}/logs`;
+  const toast = useToast();
 
   // ① その場で1件テスト保存（今日ではなく固定キー）
   const writeTest = async () => {
@@ -38,20 +40,6 @@ export default function DebugPanel({ user }: { user: User }) {
     setList(ids);
   };
 
-//   const writeToday = async () => {
-//   const today = new Date();
-//   const y = today.getFullYear();
-//   const m = String(today.getMonth()+1).padStart(2,'0');
-//   const d = String(today.getDate()).padStart(2,'0');
-//   const id = `${y}-${m}-${d}`;
-//   const ref = doc(db, "habits", user.uid, "logs", id);
-//   await setDoc(ref, {
-//     date: id, minutes: 60, note: "today-debug",
-//     createdAt: Date.now(), updatedAt: Date.now()
-//   }, { merge: true });
-//   alert(`writeToday: ${id} を保存しました`);
-// };
-
 // DebugPanel.tsx 内に関数を追加
 const writeToday = async () => {
   const now = new Date();
@@ -69,14 +57,14 @@ const writeToday = async () => {
     updatedAt: Date.now(),
   }, { merge: true });
 
-  alert(`writeToday: ${id} を保存しました`);
+  toast(`writeToday: ${id} を保存しました`);
 };
 
   useEffect(() => {
     console.log("[debug] projectId =", projectId);
     console.log("[debug] uid       =", user.uid);
     console.log("[debug] basePath  =", basePath);
-  }, [projectId, user.uid]);
+  }, [projectId, user.uid, toast, basePath]);
 
   return (
     <div style={{marginTop:12, padding:12, border:"1px dashed #ccc", borderRadius:8}}>

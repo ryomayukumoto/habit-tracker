@@ -3,6 +3,8 @@ import { useCallback, useMemo, useState } from "react";
 import { type User } from "firebase/auth";
 import dayjs from "dayjs";
 import { habitLogsRepo } from "../infra/firestore/habitLogsRepo";
+import { useToast } from "../app/hooks/useToast";
+
 
 export default function AddLogForm({ user }: { user: User }) {
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
@@ -10,24 +12,25 @@ export default function AddLogForm({ user }: { user: User }) {
   const [minutes, setMinutes] = useState<number>(60);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const save = useCallback(async () => {
     if (loading) return;
-    if (!date) return alert("日付を入力してください");
+    if (!date) return toast("日付を入力してください");
     const n = Number(minutes);
-    if (!Number.isFinite(n) || n < 0) return alert("分は0以上の数値で入力してください");
+    if (!Number.isFinite(n) || n < 0) return toast("分は0以上の数値で入力してください");
 
     try {
       setLoading(true);
       await habitLogsRepo.save(user.uid, { date, value: Math.floor(n), note });
-      alert("保存しました");
+      toast("保存しました");
     } catch (e) {
       console.error(e);
-      alert("保存に失敗しました...コンソールを確認してください");
+      toast("保存に失敗しました...コンソールを確認してください");
     } finally {
       setLoading(false);
     }
-  }, [loading, date, minutes, note, user.uid]);
+  }, [loading, date, minutes, note, user.uid, toast]);
 
   return (
     <div style={{ display: "grid", gap: 8, maxWidth: 380 }}>
