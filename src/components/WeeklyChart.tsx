@@ -8,7 +8,7 @@ Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 export default function WeeklyChart({ user }: { user: User }) {
   const logs = useHabitLogs(user.uid); // HabitLog[]: { id, date, value, note?, createdAt: Date, ... }
 
-  const { labels, values } = useMemo(() => {
+  const { labels, values, barColors } = useMemo(() => {
     // logs → Map("YYYY-MM-DD" -> value)
     const map = new Map<string, number>();
     for (const l of logs) map.set(l.date, l.value);
@@ -28,14 +28,23 @@ export default function WeeklyChart({ user }: { user: User }) {
 
     const labels = ids.map((id) => id.slice(5).replace("-", "/")); // MM/DD
     const values = ids.map((id) => map.get(id) ?? 0);
+    const todayIndex = values.length - 1;
+    const barColors = values.map((_, i) => 
+    i === todayIndex ? "lightgreen" : "rgba(205, 230, 199)")
 
-    return { labels, values };
+    return { labels, values, barColors};
   }, [logs]);
 
   return (
     <div style={{ maxWidth: 720, height: 320 }}>
       <Bar
-        data={{ labels, datasets: [{ label: "直近2週間の学習時間(分)", data: values }] }}
+        data={{ labels, 
+          datasets: [{ 
+            label: "直近2週間の学習時間(分)", 
+            data: values,
+            backgroundColor: barColors
+          }] 
+        }}
         options={{
           responsive: true,
           maintainAspectRatio: false, // 親のheightを使う
